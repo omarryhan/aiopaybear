@@ -25,19 +25,28 @@ XRATE_ALL_URL = 'https://api.savvy.io/v3/exchange/{fiat}/rate'
 XRATE_URL = 'https://api.savvy.io/v3/{crypto}/exchange/{fiat}/rate'
 
 class Paybear:
-    def __init__(self, app, raise_for_status=True, logger=None):
+    def __init__(
+        self, 
+        app, 
+        raise_for_status=True, 
+        logger=None,
+        token=None,
+        public_key=None,
+        callback_url=None
+    ):
         global _logger
 
         if logger is not None:
             _logger = logger
 
-        self.token = app.config.SERVICES['paybear-v1']['creds']['client_secret']
-        self.public_key = app.config.SERVICES['paybear-v1']['creds']['client_id']
-        self.callback_url = app.config.SERVICES['paybear-v1']['creds']['callback_url']
+        self.token = token or app.config.SERVICES['paybear-v1']['creds']['client_secret']
+        self.public_key = public_key or app.config.SERVICES['paybear-v1']['creds']['client_id']
+        self.callback_url = callback_url or app.config.SERVICES['paybear-v1']['creds']['callback_url']
         self.raise_for_status = raise_for_status
-        if not hasattr(app, 'exts'):
-            app.exts = Extensions()
-        app.exts.paybear = self
+        if app:
+            if not hasattr(app, 'exts'):
+                app.exts = Extensions()
+            app.exts.paybear = self
 
     async def get_currencies(self):
         '''
@@ -77,13 +86,14 @@ class Paybear:
                 }
             }
         '''
+        payment_url = PAYMENT_URL
         if callback_url is not None:
             self.callback_url = callback_url
         if lock_address_timeout:
             lck_addr = '&lock_address_timeout={}'.format(lock_address_timeout)
-            PAYMENT_URL += lck_addr
+            payment_url += lck_addr
         async with ClientSession() as sess:
-            async with sess.get(PAYMENT_URL.format(crypto=crypto, callback_url=quote_plus(self.callback_url), token=self.token)) as resp:
+            async with sess.get(payment_url.format(crypto=crypto, callback_url=quote_plus(self.callback_url), token=self.token)) as resp:
                 json = await resp.json()
                 if self.raise_for_status is not False:
                     try:
