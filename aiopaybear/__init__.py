@@ -1,3 +1,6 @@
+''' https://github.com/Paybear/paybear-samples '''
+
+
 from aiohttp import ClientSession
 import functools
 from logging import getLogger
@@ -15,8 +18,13 @@ class Extensions:
 class PaybearError(Exception):
     pass
 
+
+GET_CURRENCIES_URL = 'https://api.savvy.io/v3/currencies?token={token}'
+PAYMENT_URL = 'https://api.savvy.io/v3/{crypto}/payment/{callback_url}?token={token}'
+XRATE_ALL_URL = 'https://api.savvy.io/v3/exchange/{fiat}/rate'
+XRATE_URL = 'https://api.savvy.io/v3/{crypto}/exchange/{fiat}/rate'
+
 class Paybear:
-    # https://github.com/Paybear/paybear-samples
     def __init__(self, app, raise_for_status=True, logger=None):
         global _logger
 
@@ -35,9 +43,8 @@ class Paybear:
         '''
         Get a list of enabled currencies
         '''
-        BASE = 'https://api.savvy.io/v3/currencies?token={token}'
         async with ClientSession() as sess:
-            async with sess.get(BASE.format(token=self.token)) as resp:
+            async with sess.get(GET_CURRENCIES_URL.format(token=self.token)) as resp:
                 json = await resp.json()
                 if self.raise_for_status is not False:
                     try:
@@ -72,12 +79,11 @@ class Paybear:
         '''
         if callback_url is not None:
             self.callback_url = callback_url
-        BASE = 'https://api.savvy.io/v3/{crypto}/payment/{callback_url}?token={token}'
         if lock_address_timeout:
             lck_addr = '&lock_address_timeout={}'.format(lock_address_timeout)
-            BASE += lck_addr
+            PAYMENT_URL += lck_addr
         async with ClientSession() as sess:
-            async with sess.get(BASE.format(crypto=crypto, callback_url=quote_plus(self.callback_url), token=self.token)) as resp:
+            async with sess.get(PAYMENT_URL.format(crypto=crypto, callback_url=quote_plus(self.callback_url), token=self.token)) as resp:
                 json = await resp.json()
                 if self.raise_for_status is not False:
                     try:
@@ -140,9 +146,8 @@ class Paybear:
         }
 
         One of (usd, eur, cad, rub etc) '''
-        BASE = 'https://api.savvy.io/v3/exchange/{fiat}/rate'
         async with ClientSession() as sess:
-            async with sess.get(BASE.format(fiat=fiat)) as resp:
+            async with sess.get(XRATE_ALL_URL.format(fiat=fiat)) as resp:
                 json = await resp.json()
                 if self.raise_for_status is not False:
                     try:
@@ -172,9 +177,8 @@ class Paybear:
         crypto	Crypto currency (eth, btc, bch, ltc, dash, btg)
         fiat	Fiat currency (usd, eur, cad, rub etc)
         '''
-        BASE = 'https://api.savvy.io/v3/{crypto}/exchange/{fiat}/rate'
         async with ClientSession() as sess:
-            async with sess.get(BASE.format(crypto=crypto, fiat=fiat)) as resp:
+            async with sess.get(XRATE_URL.format(crypto=crypto, fiat=fiat)) as resp:
                 json = await resp.json()
                 if self.raise_for_status is not False:
                     try:
