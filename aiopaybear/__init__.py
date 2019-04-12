@@ -18,7 +18,6 @@ class Extensions:
 class PaybearError(Exception):
     pass
 
-
 GET_CURRENCIES_URL = 'https://api.savvy.io/v3/currencies?token={token}'
 PAYMENT_URL = 'https://api.savvy.io/v3/{crypto}/payment/{callback_url}?token={token}'
 XRATE_ALL_URL = 'https://api.savvy.io/v3/exchange/{fiat}/rate'
@@ -27,7 +26,7 @@ XRATE_URL = 'https://api.savvy.io/v3/{crypto}/exchange/{fiat}/rate'
 class Paybear:
     def __init__(
         self, 
-        app, 
+        app=None, 
         raise_for_status=True, 
         logger=None,
         token=None,
